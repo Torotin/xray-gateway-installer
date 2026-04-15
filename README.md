@@ -1,12 +1,13 @@
+# Xray Gateway Installer
+
 [![Last Commit](https://img.shields.io/github/last-commit/Torotin/xray-gateway-installer)](https://github.com/Torotin/xray-gateway-installer/commits)
 [![Debian](https://img.shields.io/badge/platform-Debian_12+-A81D33?logo=debian)](https://www.debian.org/)
 [![Xray-core](https://img.shields.io/badge/Xray--core-stable-7B16FF?logo=linux)](https://github.com/XTLS/Xray-core)
 
-# Xray Gateway Installer
-
 `Xray Gateway Installer` — модульный bash-проект для развёртывания gateway-хоста на базе `Xray-core` с transparent routing через `iptables-legacy`, `REDIRECT` и опциональный `TPROXY`.
 
 Проект ориентирован на эксплуатацию Debian gateway-хоста:
+
 - с install-time подготовкой системы;
 - с runtime-приведением firewall и routing к целевому состоянию;
 - с консервативной работой по отношению к существующим Xray JSON-конфигам.
@@ -14,6 +15,7 @@
 ## Назначение
 
 Проект подходит для двух основных сценариев:
+
 - `inline-lan` — классический gateway между `WAN` и `LAN`;
 - `policy-gateway` — single-segment или upstream policy routing через GW для выбранных источников.
 
@@ -25,6 +27,7 @@
 - `iproute2`
 
 Не входят в официальный baseline:
+
 - `Ubuntu`
 - `nftables-only`
 - полноценный `IPv6 transparent proxy`
@@ -49,6 +52,7 @@
 Базовые JSON-конфиги вынесены в `templates/xray-base/*.template.json`.
 
 Стартовый набор включает:
+
 - `00_api.json`
 - `01_log.json`
 - `02_dns.json`
@@ -59,6 +63,7 @@
 - `07_policy.json`
 
 Базовые свойства:
+
 - `redirect` обслуживает `TCP`;
 - `tproxy` обслуживает `UDP`;
 - DNS baseline использует string-form DNS servers, поддерживаемые Xray;
@@ -74,6 +79,7 @@ Legacy-шаблон [templates/xray.template.json](/mnt/x/xray-gateway-installer
 ## Поведение с существующими конфигами
 
 Если в `/opt/xray/configs` уже есть пользовательские `*.json`, install-flow:
+
 - не затирает их;
 - создаёт snapshot в `/opt/xray/config-backups/preserved-*`;
 - продолжает работу с существующим набором конфигов.
@@ -109,6 +115,7 @@ sudo ./installer.sh install
 ## Что делает install-flow
 
 В штатном install-flow установщик:
+
 - проверяет и при необходимости доустанавливает обязательные зависимости;
 - подготавливает системные настройки;
 - устанавливает Xray;
@@ -117,6 +124,7 @@ sudo ./installer.sh install
 - настраивает monitoring и update scripts.
 
 Обязательные зависимости install baseline:
+
 - `jq`
 - `cron` / `crontab`
 - `curl`
@@ -134,10 +142,12 @@ sudo ./installer.sh install
 Полная dependency precheck автоматически выполняется только для `install` и `update`. Команды `status`, `firewall`, `monitoring` и `uninstall` не должны побочно включать сервисы или доустанавливать пакеты, если оператор просто смотрит состояние или снимает runtime.
 
 Для monitoring cron не используется как основной планировщик:
+
 - `xray-monitoring-collector.timer` является canonical baseline;
 - legacy cron-записи `monitoring.sh collect` очищаются автоматически, чтобы install/reinstall не плодили дубликаты.
 
 Для update-задач Xray canonical baseline пока остаётся на `cron`:
+
 - `/opt/xray/updates/update-xray-core.sh`
 - `/opt/xray/updates/update-geo-data.sh`
 - repeated `install/reinstall` должен сохранять ровно по одной cron-строке на каждую update-задачу;
@@ -154,11 +164,13 @@ sudo ./installer.sh uninstall
 ```
 
 Удаление выполняется в порядке, безопасном для runtime teardown:
+
 - сначала снимаются плагины;
 - затем удаляются Xray-модули;
 - в конце восстанавливаются системные настройки.
 
 В текущем baseline `uninstall`:
+
 - останавливает и удаляет `xray`, `xray-iptables`, monitoring и kill-switch units;
 - снимает `ip rule`, `ip route` и `iptables`-цепочки `XRAY*`, включая policy-scope цепочки `XRAY_PREROUTING` и `XRAY_NAT_PREROUTING`;
 - удаляет `/opt/xray` и systemd override для `xray.service`;
@@ -212,6 +224,7 @@ curl -4 https://2ip.io
 ## Управление runtime firewall
 
 Файлы управления:
+
 - `/opt/xray/iptables/xray-iptables.mode`
 - `/opt/xray/iptables/xray-policy-iptables.interfaces`
 - `/opt/xray/iptables/xray-policy-iptables.cidrs`
