@@ -1,0 +1,1326 @@
+# === Единая конфигурация Xray Gateway Installer ===
+# Версия: 2.0.0
+# Автор: Xray Gateway Installer Team
+# Описание: Объединенная конфигурация всех компонентов системы
+
+# === Основные пути (якоря) ===
+installer_root: &installer_root "/opt/xray-installer"
+xray_root: &xray_root "/opt/xray"
+logs_root: &logs_root "/opt/xray-installer/_logs"
+backups_root: &backups_root "/opt/xray-installer/backups"
+configs_root: &configs_root "/opt/xray/configs"
+templates_root: &templates_root "/opt/xray/templates"
+metrics_root: &metrics_root "/opt/xray/metrics"
+ssl_root: &ssl_root "/opt/xray-installer/ssl"
+data_root: &data_root "/opt/xray-installer/data"
+
+# === Дополнительные пути ===
+installer_config_dir: &installer_config_dir "/opt/xray-installer/config"
+installer_log_file: &installer_log_file "/opt/xray-installer/installer.log"
+xray_config_file: &xray_config_file "/opt/xray/config.json"
+xray_logs_dir: &xray_logs_dir "/opt/xray/logs"
+xray_dat_dir: &xray_dat_dir "/opt/xray/dat"
+xray_updates_dir: &xray_updates_dir "/opt/xray/updates"
+xray_iptables_dir: &xray_iptables_dir "/opt/xray/iptables"
+xray_watchdog_script: &xray_watchdog_script "/opt/xray/iptables/killswitch-watchdog.sh"
+backups_configs_dir: &backups_configs_dir "/opt/xray-installer/backups/configs"
+metrics_cache_file: &metrics_cache_file "/opt/xray/metrics/cache.json"
+xray_alerts_log: &xray_alerts_log "/opt/xray/logs/alerts.log"
+database_file: &database_file "/opt/xray-installer/data/database.db"
+
+# === Системные константы ===
+constants:
+  # === Пользователи и группы ===
+  xray_user:
+    value: "xray"
+    description: "Пользователь для Xray"
+    type: "string"
+    options: ["xray", "proxy", "gateway"]
+    example: "xray"
+  
+  xray_group:
+    value: "xray"
+    description: "Группа для Xray"
+    type: "string"
+    required: true
+    example: "xray"
+  
+  xray_gid:
+    value: "1001"
+    description: "GID для группы Xray"
+    type: "string"
+    required: true
+    example: "1001"
+  
+  # === Пути установки ===
+  xray_install_path:
+    value: "/opt/xray"
+    description: "Путь установки Xray"
+    type: "string"
+    required: true
+    example: "/opt/xray"
+  
+  xray_config_path:
+    value: "/opt/xray/configs"
+    description: "Путь к конфигурациям Xray"
+    type: "string"
+    required: true
+    example: "/opt/xray/configs"
+  
+  xray_data_path:
+    value: "/opt/xray/dat"
+    description: "Путь к Geo данным Xray"
+    type: "string"
+    required: true
+    example: "/opt/xray/dat"
+  
+  xray_log_path:
+    value: "/opt/xray/logs"
+    description: "Путь к логам Xray"
+    type: "string"
+    required: true
+    example: "/opt/xray/logs"
+  
+  xray_installer_url:
+    value: "https://github.com/XTLS/Xray-install/raw/main/install-release.sh"
+    description: "URL для установки Xray"
+    type: "string"
+    required: true
+    example: "https://github.com/XTLS/Xray-install/raw/main/install-release.sh"
+  
+  # === Сетевые настройки ===
+  network:
+    standard_lan:
+      value: "eth0"
+      description: "Стандартный LAN интерфейс"
+      type: "string"
+      required: true
+      example: "eth0"
+    
+    standard_wan:
+      value: "eth1"
+      description: "Стандартный WAN интерфейс"
+      type: "string"
+      required: true
+      example: "eth1"
+  
+  # === Файрвол ===
+  firewall:
+    mark_id:
+      value: "0x1001"
+      description: "ID метки для маршрутизации (0x + xray_gid)"
+      type: "string"
+      required: true
+      example: "0x1001"
+    
+    route_table_id:
+      value: "233"
+      description: "ID таблицы маршрутизации"
+      type: "string"
+      required: true
+      example: "233"
+    
+    tproxy_port:
+      value: "12345"
+      description: "Порт TPROXY"
+      type: "string"
+      required: true
+      example: "12345"
+    
+    redirect_port:
+      value: "12346"
+      description: "Порт REDIRECT"
+      type: "string"
+      required: true
+      example: "12346"
+    
+    chains:
+      main:
+        value: "XRAY"
+        description: "Основная цепочка файрвола"
+        type: "string"
+        required: true
+        example: "XRAY"
+      
+      self:
+        value: "XRAY_SELF"
+        description: "Цепочка для собственного трафика"
+        type: "string"
+        required: true
+        example: "XRAY_SELF"
+      
+      enabled:
+        value: "XRAY_ENABLED"
+        description: "Цепочка для включенного состояния"
+        type: "string"
+        required: true
+        example: "XRAY_ENABLED"
+      
+      disabled:
+        value: "XRAY_DISABLED"
+        description: "Цепочка для отключенного состояния"
+        type: "string"
+        required: true
+        example: "XRAY_DISABLED"
+  
+  # === Системные настройки ===
+  system:
+    admin_user:
+      value: "admin"
+      description: "Административный пользователь"
+      type: "string"
+      required: true
+      example: "admin"
+    
+    ssh_port:
+      value: "22"
+      description: "Порт SSH"
+      type: "string"
+      required: true
+      example: "22"
+    
+    grub_timeout:
+      value: "5"
+      description: "Таймаут GRUB (секунды)"
+      type: "string"
+      required: true
+      example: "5"
+  
+  # === Логирование ===
+  logging:
+    level:
+      value: "INFO"
+      description: "Уровень логирования"
+      type: "string"
+      required: true
+      example: "INFO"
+      options: ["DEBUG", "INFO", "WARN", "ERROR"]
+    
+    retention_days:
+      value: "7"
+      description: "Срок хранения логов (дни)"
+      type: "string"
+      required: true
+      example: "7"
+    
+    max_size_mb:
+      value: "100"
+      description: "Максимальный размер лога (МБ)"
+      type: "string"
+      required: true
+      example: "100"
+
+# === Настройки установщика ===
+installer:
+  # === Основная информация ===
+  version:
+    value: "2.0.0"
+    description: "Версия установщика"
+    type: "string"
+    required: true
+    example: "2.0.0"
+  
+  # === Поддерживаемые операционные системы ===
+  supported_os:
+    value: ["debian", "ubuntu"]
+    description: "Список поддерживаемых ОС"
+    type: "array"
+    required: true
+    example: ["debian", "ubuntu"]
+  
+  min_debian_version:
+    value: 12
+    description: "Минимальная версия Debian"
+    type: "integer"
+    required: true
+    example: 12
+  
+  min_ubuntu_version:
+    value: 22.04
+    description: "Минимальная версия Ubuntu"
+    type: "float"
+    required: true
+    example: 22.04
+  
+  # === Системные требования ===
+  requirements:
+    min_ram_mb:
+      value: 512
+      description: "Минимальный объем RAM (МБ)"
+      type: "integer"
+      required: true
+      example: 512
+    
+    min_disk_gb:
+      value: 2
+      description: "Минимальный объем диска (ГБ)"
+      type: "integer"
+      required: true
+      example: 2
+    
+    required_interfaces:
+      value: 2
+      description: "Количество требуемых сетевых интерфейсов"
+      type: "integer"
+      required: true
+      example: 2
+  
+  # === Настройки логирования ===
+  logging:
+    level:
+      value: "INFO"
+      description: "Уровень логирования"
+      type: "string"
+      required: true
+      example: "INFO"
+      options: ["DEBUG", "INFO", "WARN", "ERROR"]
+    
+    file:
+      value: "/opt/xray-installer/install.log"
+      description: "Путь к файлу лога установки"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/install.log"
+    
+    console:
+      value: true
+      description: "Вывод логов в консоль"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    syslog:
+      value: false
+      description: "Отправка логов в syslog"
+      type: "boolean"
+      options: [true, false]
+      example: false
+  
+  # === Настройки резервного копирования ===
+  backup:
+    enabled:
+      value: true
+      description: "Включить резервное копирование"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    path:
+      value: "/opt/xray-installer/backups"
+      description: "Путь к резервным копиям"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/backups"
+    
+    retention_days:
+      value: "30"
+      description: "Срок хранения резервных копий (дни)"
+      type: "string"
+      required: true
+      example: "30"
+  
+  # === Настройки сети ===
+  network:
+    auto_detect:
+      value: true
+      description: "Автоматическое определение интерфейсов"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    grub_optimization:
+      value: true
+      description: "Оптимизация GRUB"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    sysctl_optimization:
+      value: true
+      description: "Оптимизация sysctl"
+      type: "boolean"
+      options: [true, false]
+      example: true
+  
+  # === Настройки безопасности ===
+  security:
+    create_admin_user:
+      value: true
+      description: "Создать административного пользователя"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    disable_root_login:
+      value: true
+      description: "Отключить вход под root"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    ssh_key_required:
+      value: true
+      description: "Требовать SSH ключ для входа"
+      type: "boolean"
+      options: [true, false]
+      example: true
+  
+  # === Настройки Xray ===
+  xray:
+    install_path:
+      value: "/opt/xray"
+      description: "Путь установки Xray"
+      type: "string"
+      required: true
+      example: "/opt/xray"
+    
+    confirm_uninstall:
+      value: true
+      description: "Подтверждение удаления Xray"
+      type: "boolean"
+      options: [true, false]
+      example: true
+
+    user:
+      value: "xray"
+      description: "Пользователь для Xray"
+      type: "string"
+      required: true
+      example: "xray"
+    
+    group:
+      value: "xray"
+      description: "Группа для Xray"
+      type: "string"
+      required: true
+      example: "xray"
+    
+    gid:
+      value: "1001"
+      description: "GID для группы Xray"
+      type: "string"
+      required: true
+      example: "1001"
+    
+    auto_update:
+      value: true
+      description: "Автоматическое обновление Xray"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    kill_switch:
+      value: true
+      description: "Включить Kill-Switch функциональность"
+      type: "boolean"
+      options: [true, false]
+      example: true
+
+# === Модули ===
+modules:
+  # === Сетевой модуль ===
+  network:
+    enabled:
+      value: true
+      description: "Включить сетевой модуль"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    priority:
+      value: 1
+      description: "Приоритет загрузки модуля"
+      type: "integer"
+      required: true
+      example: 1
+    
+    dependencies:
+      value: []
+      description: "Зависимости модуля"
+      type: "array"
+      required: true
+      example: []
+    
+    config:
+      auto_detect_interfaces:
+        value: true
+        description: "Автоматическое определение интерфейсов"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      rename_interfaces:
+        value: true
+        description: "Переименование интерфейсов"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      standard_names:
+        lan:
+          value: "eth0"
+          description: "Стандартное имя LAN интерфейса"
+          type: "string"
+          required: true
+          example: "eth0"
+        
+        wan:
+          value: "eth1"
+          description: "Стандартное имя WAN интерфейса"
+          type: "string"
+          required: true
+          example: "eth1"
+      
+      backup_network_config:
+        value: true
+        description: "Резервное копирование сетевой конфигурации"
+        type: "boolean"
+        options: [true, false]
+        example: true
+
+  # === Системный модуль ===
+  system:
+    enabled:
+      value: true
+      description: "Включить системный модуль"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    priority:
+      value: 2
+      description: "Приоритет загрузки модуля"
+      type: "integer"
+      required: true
+      example: 2
+    
+    dependencies:
+      value: ["network"]
+      description: "Зависимости модуля"
+      type: "array"
+      required: true
+      example: ["network"]
+    
+    config:
+      create_admin_user:
+        value: false
+        description: "Создать административного пользователя"
+        type: "boolean"
+        options: [true, false]
+        example: false
+      
+      disable_root_login:
+        value: false
+        description: "Отключить вход под root"
+        type: "boolean"
+        options: [true, false]
+        example: false
+      
+      optimize_grub:
+        value: true
+        description: "Оптимизировать GRUB"
+        type: "boolean"
+        options: [true, false]
+        example: false
+      
+      optimize_sysctl:
+        value: true
+        description: "Оптимизировать sysctl"
+        type: "boolean"
+        options: [true, false]
+        example: false
+      
+      disable_conflicting_services:
+        value: true
+        description: "Отключить конфликтующие сервисы"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      skip_admin_user_setup:
+        value: true
+        description: "Пропустить создание административного пользователя"
+        type: "boolean"
+        options: [true, false]
+        example: false
+      
+      rename_interfaces:
+        value: true
+        description: "Переименовать сетевые интерфейсы в eth0/eth1"
+        type: "boolean"
+        options: [true, false]
+        example: true
+
+  # === Xray модуль ===
+  xray:
+    enabled:
+      value: true
+      description: "Включить модуль Xray"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    priority:
+      value: 3
+      description: "Приоритет загрузки модуля"
+      type: "integer"
+      required: true
+      example: 3
+    
+    dependencies:
+      value: ["network", "system"]
+      description: "Зависимости модуля"
+      type: "array"
+      required: true
+      example: ["network", "system"]
+    
+    config:
+      install_path:
+        value: "/opt/xray"
+        description: "Путь установки Xray"
+        type: "string"
+        required: true
+        example: "/opt/xray"
+      
+      user:
+        value: "xray"
+        description: "Пользователь для Xray"
+        type: "string"
+        required: true
+        example: "xray"
+      
+      group:
+        value: "xray"
+        description: "Группа для Xray"
+        type: "string"
+        required: true
+        example: "xray"
+      
+      gid:
+        value: "1001"
+        description: "GID для группы Xray"
+        type: "string"
+        required: true
+        example: "1001"
+      
+      auto_update:
+        value: true
+        description: "Автоматическое обновление Xray"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      kill_switch:
+        value: true
+        description: "Включить Kill-Switch функциональность"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      # === Интерактивные настройки ===
+      create_admin_user:
+        value: false
+        description: "Создать административного пользователя для управления Xray"
+        type: "boolean"
+        options: [true, false]
+        example: false
+      
+      enable_auto_updates:
+        value: true
+        description: "Включить автоматические обновления Xray"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      enable_geo_updates:
+        value: true
+        description: "Включить автоматическое обновление Geo данных"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      confirm_uninstall:
+        value: true
+        description: "Подтверждение удаления Xray"
+        type: "boolean"
+        options: [true, false]
+        example: true
+
+# === Плагины ===
+plugins:
+  # === Плагин Backup ===
+  backup:
+    enabled:
+      value: false
+      description: "Включить плагин резервного копирования"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    priority:
+      value: 3
+      description: "Приоритет загрузки плагина"
+      type: "integer"
+      required: true
+      example: 3
+    
+    dependencies:
+      value: ["xray"]
+      description: "Зависимости плагина"
+      type: "array"
+      required: true
+      example: ["xray"]
+    
+    config:
+      backup_path:
+        value: "/opt/xray-installer/backups"
+        description: "Путь к резервным копиям"
+        type: "string"
+        required: true
+        example: "/opt/xray-installer/backups"
+      
+      retention_days:
+        value: "30"
+        description: "Срок хранения резервных копий (дни)"
+        type: "string"
+        required: true
+        example: "30"
+      
+      auto_backup:
+        value: false
+        description: "Автоматическое резервное копирование"
+        type: "boolean"
+        options: [true, false]
+        example: false
+
+  # === Плагин Firewall ===
+  firewall:
+    enabled:
+      value: true
+      description: "Включить плагин файрвола"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    priority:
+      value: 2
+      description: "Приоритет загрузки плагина"
+      type: "integer"
+      required: true
+      example: 2
+    
+    dependencies:
+      value: ["xray"]
+      description: "Зависимости плагина"
+      type: "array"
+      required: true
+      example: ["xray"]
+    
+    config:
+      gateway_mode:
+        value: "inline-lan"
+        description: "Режим шлюза: inline-lan или policy-gateway"
+        type: "string"
+        required: true
+        example: "policy-gateway"
+
+      intercept_interfaces:
+        value: ""
+        description: "Список ingress-интерфейсов для перехвата, через запятую"
+        type: "string"
+        required: false
+        example: "eth0,eth1"
+
+      source_cidrs:
+        value: ""
+        description: "Список исходных CIDR для policy-gateway, через запятую"
+        type: "string"
+        required: false
+        example: "192.168.10.0/24,192.168.255.146/32"
+
+      source_ips:
+        value: ""
+        description: "Список исходных IP для policy-gateway, через запятую"
+        type: "string"
+        required: false
+        example: "192.168.255.146,192.168.255.10"
+
+      mark_id:
+        value: "0x1001"
+        description: "ID метки для маршрутизации"
+        type: "string"
+        required: true
+        example: "0x1001"
+      
+      route_table_id:
+        value: "233"
+        description: "ID таблицы маршрутизации"
+        type: "string"
+        required: true
+        example: "233"
+      
+      tproxy_port:
+        value: "12345"
+        description: "Порт TPROXY"
+        type: "string"
+        required: true
+        example: "12345"
+      
+      redirect_port:
+        value: "12346"
+        description: "Порт REDIRECT"
+        type: "string"
+        required: true
+        example: "12346"
+      
+      chains:
+        main:
+          value: "XRAY"
+          description: "Основная цепочка файрвола"
+          type: "string"
+          required: true
+          example: "XRAY"
+        
+        self:
+          value: "XRAY_SELF"
+          description: "Цепочка для собственного трафика"
+          type: "string"
+          required: true
+          example: "XRAY_SELF"
+        
+        enabled:
+          value: "XRAY_ENABLED"
+          description: "Цепочка для включенного состояния"
+          type: "string"
+          required: true
+          example: "XRAY_ENABLED"
+        
+        disabled:
+          value: "XRAY_DISABLED"
+          description: "Цепочка для отключенного состояния"
+          type: "string"
+          required: true
+          example: "XRAY_DISABLED"
+
+  # === Плагин Monitoring ===
+  monitoring:
+    enabled:
+      value: true
+      description: "Включить плагин мониторинга"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    priority:
+      value: 4
+      description: "Приоритет загрузки плагина"
+      type: "integer"
+      required: true
+      example: 4
+    
+    dependencies:
+      value: ["xray"]
+      description: "Зависимости плагина"
+      type: "array"
+      required: true
+      example: ["xray"]
+    
+    config:
+      metrics_enabled:
+        value: true
+        description: "Включить сбор метрик"
+        type: "boolean"
+        options: [true, false]
+        example: true
+      
+      metrics_interval:
+        value: "60"
+        description: "Интервал сбора метрик (секунды)"
+        type: "string"
+        required: true
+        example: "60"
+      
+      alerts_enabled:
+        value: true
+        description: "Включить уведомления"
+        type: "boolean"
+        options: [true, false]
+        example: true
+
+
+# === Глобальные переменные (для обратной совместимости) ===
+variables:
+  # === Настройки установщика ===
+  installer:
+    version:
+      value: "2.0.0"
+      description: "Версия установщика"
+      type: "string"
+      required: true
+      example: "2.0.0"
+    
+    script_dir:
+      value: "/opt/xray-installer"
+      description: "Директория установщика"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer"
+    
+    config_dir:
+      value: "/opt/xray-installer/config"
+      description: "Директория конфигураций"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/config"
+    
+    log_file:
+      value: "/opt/xray-installer/installer.log"
+      description: "Основной лог файл"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/installer.log"
+
+  # === Настройки Xray ===
+  xray:
+    install_path:
+      value: *xray_root
+      description: "Путь установки Xray"
+      type: "string"
+      required: true
+      example: "/opt/xray"
+    
+    configs_path:
+      value: *configs_root
+      description: "Путь к конфигурациям Xray"
+      type: "string"
+      required: true
+      example: "/opt/xray/configs"
+    
+    logs_path:
+      value: *xray_logs_dir
+      description: "Путь к логам Xray"
+      type: "string"
+      required: true
+      example: "/opt/xray/logs"
+    
+    dat_path:
+      value: *xray_dat_dir
+      description: "Путь к Geo данным Xray"
+      type: "string"
+      required: true
+      example: "/opt/xray/dat"
+    
+    updates_path:
+      value: *xray_updates_dir
+      description: "Путь к скриптам обновления"
+      type: "string"
+      required: true
+      example: "/opt/xray/updates"
+    
+    iptables_path:
+      value: *xray_iptables_dir
+      description: "Путь к скриптам iptables"
+      type: "string"
+      required: true
+      example: "/opt/xray/iptables"
+    
+    watchdog_script:
+      value: *xray_watchdog_script
+      description: "Путь к скрипту watchdog"
+      type: "string"
+      required: true
+      example: "/opt/xray/iptables/killswitch-watchdog.sh"
+    
+    # === Интерактивные настройки ===
+    create_admin_user:
+      value: false
+      description: "Создать административного пользователя для управления Xray"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    enable_auto_updates:
+      value: true
+      description: "Включить автоматические обновления Xray"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    enable_geo_updates:
+      value: true
+      description: "Включить автоматическое обновление Geo данных"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    confirm_uninstall:
+      value: true
+      description: "Подтверждение удаления Xray"
+      type: "boolean"
+      options: [true, false]
+      example: true
+
+  # === Настройки логирования ===
+  logging:
+    level:
+      value: "INFO"
+      description: "Уровень логирования"
+      type: "string"
+      required: true
+      example: "INFO"
+      options: ["DEBUG", "INFO", "WARN", "ERROR"]
+    
+    file:
+      value: *installer_log_file
+      description: "Основной лог файл"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/installer.log"
+    
+    console:
+      value: true
+      description: "Вывод логов в консоль"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    syslog:
+      value: false
+      description: "Отправка логов в syslog"
+      type: "boolean"
+      options: [true, false]
+      example: false
+
+  # === Настройки резервного копирования ===
+  backup:
+    enabled:
+      value: true
+      description: "Включить резервное копирование"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    path:
+      value: *backups_root
+      description: "Путь к резервным копиям"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/backups"
+    
+    retention_days:
+      value: "30"
+      description: "Срок хранения резервных копий (дни)"
+      type: "string"
+      required: true
+      example: "30"
+    
+    configs_path:
+      value: *backups_configs_dir
+      description: "Путь к резервным копиям конфигураций"
+      type: "string"
+      required: true
+      example: "/opt/xray-installer/backups/configs"
+
+  # === Настройки мониторинга ===
+  monitoring:
+    enabled:
+      value: true
+      description: "Включить мониторинг"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    metrics_path:
+      value: *metrics_root
+      description: "Путь к метрикам"
+      type: "string"
+      required: true
+      example: "/opt/xray/metrics"
+    
+    cache_file:
+      value: *metrics_cache_file
+      description: "Файл кэша метрик"
+      type: "string"
+      required: true
+      example: "/opt/xray/metrics/cache.json"
+    
+    alerts_log:
+      value: *xray_alerts_log
+      description: "Лог файл уведомлений"
+      type: "string"
+      required: true
+      example: "/opt/xray/logs/alerts.log"
+
+  # === Настройки Geo данных ===
+  geo_data:
+    enabled:
+      value: true
+      description: "Включить обновления Geo данных"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    update_schedule:
+      geo_data:
+        value: "0 4 * * *"
+        description: "Расписание обновления Geo данных"
+        type: "string"
+        required: true
+        example: "0 4 * * *"
+    
+    sources:
+      value:
+        - name: "antifilter_ip"
+          url: "https://github.com/Skrill0/AntiFilter-IP/releases/latest/download/geoip.dat"
+          type: "geoip"
+          priority: 1
+        - name: "antifilter_domains"
+          url: "https://github.com/Skrill0/AntiFilter-Domains/releases/latest/download/geosite.dat"
+          type: "geosite"
+          priority: 1
+        - name: "v2fly_geoip"
+          url: "https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+          type: "geoip"
+          priority: 2
+        - name: "v2fly_geosite"
+          url: "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+          type: "geosite"
+          priority: 2
+        - name: "zkeen_ip"
+          url: "https://github.com/jameszeroX/zkeen-ip/releases/latest/download/zkeenip.dat"
+          type: "geoip"
+          priority: 3
+        - name: "zkeen_domains"
+          url: "https://github.com/jameszeroX/zkeen-domains/releases/latest/download/zkeen.dat"
+          type: "geosite"
+          priority: 3
+      description: "Источники Geo данных"
+      type: "array"
+      required: true
+      example: "Список источников Geo данных"
+
+  # === Настройки файрвола ===
+  firewall:
+    enabled:
+      value: true
+      description: "Включить файрвол"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    mark_id:
+      value: "0x1001"
+      description: "ID метки для маршрутизации"
+      type: "string"
+      required: true
+      example: "0x1001"
+    
+    route_table_id:
+      value: "233"
+      description: "ID таблицы маршрутизации"
+      type: "string"
+      required: true
+      example: "233"
+    
+    tproxy_port:
+      value: "12345"
+      description: "Порт TPROXY"
+      type: "string"
+      required: true
+      example: "12345"
+    
+    redirect_port:
+      value: "12346"
+      description: "Порт REDIRECT"
+      type: "string"
+      required: true
+      example: "12346"
+    
+    chains:
+      main:
+        value: "XRAY"
+        description: "Основная цепочка файрвола"
+        type: "string"
+        required: true
+        example: "XRAY"
+      
+      self:
+        value: "XRAY_SELF"
+        description: "Цепочка для собственного трафика"
+        type: "string"
+        required: true
+        example: "XRAY_SELF"
+      
+      enabled:
+        value: "XRAY_ENABLED"
+        description: "Цепочка для включенного состояния"
+        type: "string"
+        required: true
+        example: "XRAY_ENABLED"
+      
+      disabled:
+        value: "XRAY_DISABLED"
+        description: "Цепочка для отключенного состояния"
+        type: "string"
+        required: true
+        example: "XRAY_DISABLED"
+
+  # === Настройки безопасности ===
+  security:
+    create_admin_user:
+      value: true
+      description: "Создать административного пользователя"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    disable_root_login:
+      value: true
+      description: "Отключить вход под root"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    ssh_key_required:
+      value: true
+      description: "Требовать SSH ключ для входа"
+      type: "boolean"
+      options: [true, false]
+      example: true
+
+  # === Настройки производительности ===
+  performance:
+    optimize_grub:
+      value: true
+      description: "Оптимизировать GRUB"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    optimize_sysctl:
+      value: true
+      description: "Оптимизировать sysctl"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    disable_conflicting_services:
+      value: true
+      description: "Отключить конфликтующие сервисы"
+      type: "boolean"
+      options: [true, false]
+      example: true
+
+  # === Настройки уведомлений ===
+  notifications:
+    enabled:
+      value: true
+      description: "Включить уведомления"
+      type: "boolean"
+      options: [true, false]
+      example: true
+    
+    email:
+      value: false
+      description: "Отправка уведомлений по email"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    telegram:
+      value: false
+      description: "Отправка уведомлений в Telegram"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    webhook:
+      value: false
+      description: "Отправка уведомлений через webhook"
+      type: "boolean"
+      options: [true, false]
+      example: false
+
+  # === Настройки разработки ===
+  development:
+    debug_mode:
+      value: false
+      description: "Режим отладки"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    verbose_logging:
+      value: false
+      description: "Подробное логирование"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    test_mode:
+      value: false
+      description: "Тестовый режим"
+      type: "boolean"
+      options: [true, false]
+      example: false
+
+  # === Настройки локализации ===
+  localization:
+    language:
+      value: "ru"
+      description: "Язык интерфейса"
+      type: "string"
+      required: true
+      example: "ru"
+      options: ["ru", "en", "de", "fr", "es", "it", "pt", "ja", "ko", "zh"]
+    
+    timezone:
+      value: "UTC"
+      description: "Часовой пояс"
+      type: "string"
+      required: true
+      example: "UTC"
+    
+    date_format:
+      value: "YYYY-MM-DD"
+      description: "Формат даты"
+      type: "string"
+      required: true
+      example: "YYYY-MM-DD"
+    
+    time_format:
+      value: "HH:mm:ss"
+      description: "Формат времени"
+      type: "string"
+      required: true
+      example: "HH:mm:ss"
+
+  # === Настройки интеграции ===
+  integration:
+    api_enabled:
+      value: false
+      description: "Включить API"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    api_port:
+      value: "8080"
+      description: "Порт API"
+      type: "string"
+      required: true
+      example: "8080"
+    
+    web_interface:
+      value: false
+      description: "Включить веб-интерфейс"
+      type: "boolean"
+      options: [true, false]
+      example: false
+    
+    web_port:
+      value: "8081"
+      description: "Порт веб-интерфейса"
+      type: "string"
+      required: true
+      example: "8081"

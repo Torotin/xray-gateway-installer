@@ -1,0 +1,16 @@
+[Unit]
+Description=Xray Kill-Switch Watchdog
+After=xray.service network.target
+Wants=xray.service
+
+[Service]
+Type=simple
+ExecStart=/opt/xray/iptables/killswitch-watchdog.sh
+Restart=always
+RestartSec=5
+User=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

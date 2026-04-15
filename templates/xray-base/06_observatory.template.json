@@ -1,0 +1,10 @@
+{
+//   "observatory": {
+//     "enableConcurrency": true,
+//     "probeInterval": "10s",
+//     "probeUrl": "https://www.gstatic.com/generate_204",
+//     "subjectSelector": [
+//       "proxy-"
+//     ]
+//   }
+}
