@@ -1,0 +1,35 @@
+{
+    "dns": {
+        "hosts": {
+            "dns.alidns.com": ["223.5.5.5","223.6.6.6"],
+            "one.one.one.one": ["1.1.1.1","1.0.0.1"],
+            "dns.cloudflare.com": ["104.16.132.229","104.16.133.229"],
+            "cloudflare-dns.com": ["104.16.248.249","104.16.249.249"],
+            "dot.pub": ["1.12.12.12","120.53.53.53"],
+            "dns.google": ["8.8.8.8","8.8.4.4"],
+            "dns.quad9.net": ["9.9.9.9","149.112.112.112"],
+            "common.dot.dns.yandex.net": ["77.88.8.8","77.88.8.1"],
+            "doh.dns.sb": ["185.222.222.222"],
+            "dns10.quad9.net": ["9.9.9.10","149.112.112.10"],
+            "dns.opendns.com": ["208.67.222.222","208.67.220.220"],
+            "dns.adguard.com": ["94.140.14.14","94.140.15.15"],
+            "dns-unfiltered.adguard.com": ["94.140.14.140","94.140.14.141"],
+            "doh.cleanbrowsing.org": ["185.228.168.168","185.228.168.10"],
+            "gstatic.com": ["142.250.120.94","142.250.120.120"],
+            "connectivitycheck.gstatic.com": ["142.251.98.94"]
+        },
+        "servers": [
+            "https+local://dns10.quad9.net/dns-query",
+            "https+local://one.one.one.one/dns-query",
+            "https+local://dns.google/dns-query",
+            "https+local://doh.dns.sb/dns-query",
+            "https+local://dns.opendns.com/dns-query",
+            "https+local://dns.adguard.com/dns-query",
+            "https+local://dns-unfiltered.adguard.com/dns-query",
+            "https+local://doh.cleanbrowsing.org/dns-query"
+        ],
+        "queryStrategy": "UseIPv4",
+        "disableCache": false,
+        "disableFallbackIfMatch": true
+    }
+}

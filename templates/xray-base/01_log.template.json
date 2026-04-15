@@ -1,0 +1,9 @@
+{
+  "log": {
+    "access": "__XRAY_LOG_PATH__/access.log",
+    "error": "__XRAY_LOG_PATH__/error.log",
+    "loglevel": "info",
+    "dnsLog": true,
+    "maskAddress": "quarter"
+  }
+}

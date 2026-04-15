@@ -1,0 +1,17 @@
+[Unit]
+Description=Xray Kill-Switch Monitor
+After=xray.service network.target
+Wants=xray.service
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/xray/iptables/switch-to-enabled.sh
+ExecStop=/opt/xray/iptables/switch-to-disabled.sh
+RemainAfterExit=yes
+User=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
